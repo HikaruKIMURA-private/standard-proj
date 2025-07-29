@@ -5,8 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { loginSchema, registerSchema } from "@/types/auth";
 import { redirect } from "next/navigation";
 
-export async function login(prevState: { error: string } | null, formData: FormData) {
-  const supabase = createClient();
+export async function login(
+  prevState: { error: string } | null,
+  formData: FormData
+) {
+  const supabase = await createClient();
 
   const validatedFields = loginSchema.safeParse({
     email: formData.get("email"),
@@ -43,8 +46,11 @@ export async function login(prevState: { error: string } | null, formData: FormD
   redirect("/dashboard");
 }
 
-export async function register(prevState: { error: string } | null, formData: FormData) {
-  const supabase = createClient();
+export async function register(
+  prevState: { error: string } | null,
+  formData: FormData
+) {
+  const supabase = await createClient();
 
   const validatedFields = registerSchema.safeParse({
     name: formData.get("name"),
@@ -90,7 +96,7 @@ export async function register(prevState: { error: string } | null, formData: Fo
 }
 
 export async function logout() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   await supabase.auth.signOut();
 
