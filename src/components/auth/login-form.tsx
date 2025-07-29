@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionState } from "react";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { loginSchema } from "@/types/auth";
@@ -14,35 +15,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [state, formAction, isPending] = useActionState(login, null);
 
   const [form, fields] = useForm({
     id: "login-form",
-    onSubmit: async (event) => {
-      event.preventDefault();
-      setError(null);
-      setIsLoading(true);
-
-      const formData = new FormData(event.currentTarget);
-      const result = await login(formData);
-
-      if (result?.error) {
-        setError(result.error);
-      }
-      setIsLoading(false);
-    },
     onValidate: ({ formData }) => {
       return parseWithZod(formData, { schema: loginSchema });
     },
+    shouldValidate: "onBlur",
   });
 
   const handleGitHubLogin = async () => {
-    setIsLoading(true);
     const supabase = createClient();
 
     const { error } = await supabase.auth.signInWithOAuth({
@@ -53,8 +39,8 @@ export function LoginForm() {
     });
 
     if (error) {
-      setError(error.message);
-      setIsLoading(false);
+      // エラー処理（必要に応じて）
+      console.error("GitHub login error:", error);
     }
   };
 
@@ -65,7 +51,7 @@ export function LoginForm() {
         <CardDescription>アカウントにログインしてください</CardDescription>
       </CardHeader>
       <CardContent>
-        <form {...form} className="space-y-4">
+        <form {...form} action={formAction} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor={fields.email.id}>メールアドレス</Label>
             <Input
@@ -93,10 +79,12 @@ export function LoginForm() {
             )}
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {state?.error && (
+            <p className="text-sm text-red-500">{state.error}</p>
+          )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "ログイン中..." : "ログイン"}
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "ログイン中..." : "ログイン"}
           </Button>
         </form>
 
@@ -117,9 +105,9 @@ export function LoginForm() {
             variant="outline"
             className="w-full mt-4"
             onClick={handleGitHubLogin}
-            disabled={isLoading}
+            disabled={isPending}
           >
-            {isLoading ? "認証中..." : "GitHubでログイン"}
+            {isPending ? "認証中..." : "GitHubでログイン"}
           </Button>
         </div>
       </CardContent>

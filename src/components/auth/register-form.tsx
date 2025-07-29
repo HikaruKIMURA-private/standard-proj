@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionState } from "react";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { registerSchema } from "@/types/auth";
@@ -14,27 +15,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
 
 export function RegisterForm() {
-  const [error, setError] = useState<string | null>(null);
+  const [state, formAction, isPending] = useActionState(register, null);
 
   const [form, fields] = useForm({
     id: "register-form",
-    onSubmit: async (event) => {
-      event.preventDefault();
-      setError(null);
-
-      const formData = new FormData(event.currentTarget);
-      const result = await register(formData);
-
-      if (result?.error) {
-        setError(result.error);
-      }
-    },
     onValidate: ({ formData }) => {
       return parseWithZod(formData, { schema: registerSchema });
     },
+    shouldValidate: "onBlur",
   });
 
   return (
@@ -44,7 +34,7 @@ export function RegisterForm() {
         <CardDescription>新しいアカウントを作成してください</CardDescription>
       </CardHeader>
       <CardContent>
-        <form {...form} className="space-y-4">
+        <form {...form} action={formAction} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor={fields.name.id}>名前</Label>
             <Input
@@ -103,10 +93,12 @@ export function RegisterForm() {
             )}
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {state?.error && (
+            <p className="text-sm text-red-500">{state.error}</p>
+          )}
 
-          <Button type="submit" className="w-full">
-            アカウント作成
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "アカウント作成中..." : "アカウント作成"}
           </Button>
         </form>
       </CardContent>

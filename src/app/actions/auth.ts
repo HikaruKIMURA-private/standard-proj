@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { loginSchema, registerSchema } from "@/types/auth";
 import { redirect } from "next/navigation";
 
-export async function login(formData: FormData) {
+export async function login(prevState: { error: string } | null, formData: FormData) {
   const supabase = createClient();
 
   const validatedFields = loginSchema.safeParse({
@@ -43,7 +43,7 @@ export async function login(formData: FormData) {
   redirect("/dashboard");
 }
 
-export async function register(formData: FormData) {
+export async function register(prevState: { error: string } | null, formData: FormData) {
   const supabase = createClient();
 
   const validatedFields = registerSchema.safeParse({
